@@ -4,14 +4,23 @@ import { movies, genres } from '@/data/movies';
 import MovieCard from './MovieCard';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Film, Star } from 'lucide-react';
+import { Search, Film, Star, Heart } from 'lucide-react';
 
 interface MovieListProps {
   onSelectMovie: (movie: Movie) => void;
   selectedMovie: Movie | null;
+  showFavoritesOnly?: boolean;
+  favorites?: string[];
+  onToggleFavorite?: (movieId: string) => void;
 }
 
-const MovieList = ({ onSelectMovie, selectedMovie }: MovieListProps) => {
+const MovieList = ({ 
+  onSelectMovie, 
+  selectedMovie, 
+  showFavoritesOnly = false,
+  favorites = [],
+  onToggleFavorite 
+}: MovieListProps) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedGenre, setSelectedGenre] = useState<string>('all');
   const [minRating, setMinRating] = useState<string>('all');
@@ -27,9 +36,12 @@ const MovieList = ({ onSelectMovie, selectedMovie }: MovieListProps) => {
       // Rating filter
       const matchesRating = minRating === 'all' || movie.rating >= parseFloat(minRating);
       
-      return matchesSearch && matchesGenre && matchesRating;
+      // Favorites filter
+      const matchesFavorites = !showFavoritesOnly || favorites.includes(movie.id);
+      
+      return matchesSearch && matchesGenre && matchesRating && matchesFavorites;
     });
-  }, [searchQuery, selectedGenre, minRating]);
+  }, [searchQuery, selectedGenre, minRating, showFavoritesOnly, favorites]);
 
   return (
     <div className="space-y-6">
@@ -79,7 +91,8 @@ const MovieList = ({ onSelectMovie, selectedMovie }: MovieListProps) => {
 
       {/* Results count */}
       <p className="text-sm text-muted-foreground">
-        Showing {filteredMovies.length} movie{filteredMovies.length !== 1 ? 's' : ''}
+        {showFavoritesOnly && <Heart className="w-4 h-4 inline mr-1 fill-primary text-primary" />}
+        Showing {filteredMovies.length} {showFavoritesOnly ? 'favorite ' : ''}movie{filteredMovies.length !== 1 ? 's' : ''}
       </p>
 
       {/* Movie Grid */}
@@ -91,14 +104,26 @@ const MovieList = ({ onSelectMovie, selectedMovie }: MovieListProps) => {
               movie={movie}
               onSelect={onSelectMovie}
               isSelected={selectedMovie?.id === movie.id}
+              isFavorite={favorites.includes(movie.id)}
+              onToggleFavorite={onToggleFavorite}
             />
           ))}
         </div>
       ) : (
         <div className="text-center py-16">
-          <Film className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4" />
-          <p className="text-lg text-muted-foreground">No movies found</p>
-          <p className="text-sm text-muted-foreground/70">Try adjusting your filters</p>
+          {showFavoritesOnly ? (
+            <>
+              <Heart className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4" />
+              <p className="text-lg text-muted-foreground">No favorites yet</p>
+              <p className="text-sm text-muted-foreground/70">Click the heart icon on movies to add favorites</p>
+            </>
+          ) : (
+            <>
+              <Film className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4" />
+              <p className="text-lg text-muted-foreground">No movies found</p>
+              <p className="text-sm text-muted-foreground/70">Try adjusting your filters</p>
+            </>
+          )}
         </div>
       )}
     </div>

@@ -1,14 +1,21 @@
 import { Movie } from '@/types/booking';
-import { Star, Clock, Calendar } from 'lucide-react';
+import { Star, Clock, Calendar, Heart } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 interface MovieCardProps {
   movie: Movie;
   onSelect: (movie: Movie) => void;
   isSelected?: boolean;
+  isFavorite?: boolean;
+  onToggleFavorite?: (movieId: string) => void;
 }
 
-const MovieCard = ({ movie, onSelect, isSelected }: MovieCardProps) => {
+const MovieCard = ({ movie, onSelect, isSelected, isFavorite, onToggleFavorite }: MovieCardProps) => {
+  const handleFavoriteClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onToggleFavorite?.(movie.id);
+  };
+
   return (
     <div
       onClick={() => onSelect(movie)}
@@ -30,6 +37,21 @@ const MovieCard = ({ movie, onSelect, isSelected }: MovieCardProps) => {
           <Star className="w-4 h-4 text-cinema-gold fill-cinema-gold" />
           <span className="text-sm font-semibold">{movie.rating}</span>
         </div>
+
+        {/* Favorite Button */}
+        {onToggleFavorite && (
+          <button
+            onClick={handleFavoriteClick}
+            className={`absolute top-3 left-3 p-2 rounded-full transition-all ${
+              isFavorite
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-background/80 backdrop-blur-sm text-muted-foreground hover:text-primary'
+            }`}
+            aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+          >
+            <Heart className={`w-4 h-4 ${isFavorite ? 'fill-current' : ''}`} />
+          </button>
+        )}
       </div>
 
       {/* Content */}

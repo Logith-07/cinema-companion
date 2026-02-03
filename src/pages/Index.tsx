@@ -6,9 +6,11 @@ import SeatMap from '@/components/SeatMap';
 import BookingSummary from '@/components/BookingSummary';
 import PaymentForm from '@/components/PaymentForm';
 import BookingConfirmation from '@/components/BookingConfirmation';
+import Header from '@/components/Header';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, Ticket, Film, Armchair, CreditCard, CheckCircle } from 'lucide-react';
 import heroCinema from '@/assets/hero-cinema.jpg';
+import { useFavorites } from '@/hooks/useFavorites';
 
 const Index = () => {
   const [bookingState, setBookingState] = useState<BookingState>({
@@ -19,6 +21,8 @@ const Index = () => {
   });
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null);
   const [bookingId, setBookingId] = useState('');
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+  const { favorites, toggleFavorite } = useFavorites();
 
   const handleSelectMovie = (movie: Movie) => {
     setBookingState({
@@ -108,9 +112,15 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Header */}
+      <Header 
+        showFavoritesOnly={showFavoritesOnly} 
+        onToggleFavorites={() => setShowFavoritesOnly(!showFavoritesOnly)} 
+      />
+
       {/* Hero Section */}
       {bookingState.step === 'movies' && (
-        <div className="relative h-[40vh] md:h-[50vh] overflow-hidden">
+        <div className="relative h-[35vh] md:h-[45vh] overflow-hidden">
           <img
             src={heroCinema}
             alt="Cinema experience"
@@ -120,10 +130,10 @@ const Index = () => {
           <div className="absolute bottom-0 left-0 right-0 p-6 md:p-12">
             <div className="container max-w-7xl">
               <h1 className="text-4xl md:text-6xl font-bold mb-2 gradient-text">
-                CineBook
+                Book Your Experience
               </h1>
               <p className="text-lg md:text-xl text-muted-foreground max-w-xl">
-                Book your movie experience. Select your seats. Enjoy the show.
+                Select your seats. Enjoy the show.
               </p>
             </div>
           </div>
@@ -190,6 +200,9 @@ const Index = () => {
             <MovieList
               onSelectMovie={handleSelectMovie}
               selectedMovie={bookingState.selectedMovie}
+              showFavoritesOnly={showFavoritesOnly}
+              favorites={favorites}
+              onToggleFavorite={toggleFavorite}
             />
           </div>
         )}
