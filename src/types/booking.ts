@@ -8,6 +8,7 @@ export interface Movie {
   poster: string;
   description: string;
   language: string;
+  trailerUrl?: string;
   showtimes: Showtime[];
 }
 

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import AuthModal from './AuthModal';
-import { User, LogOut, Heart, Film } from 'lucide-react';
+import { User, LogOut, Heart, Film, Shield, History } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,9 +14,11 @@ import {
 interface HeaderProps {
   showFavoritesOnly: boolean;
   onToggleFavorites: () => void;
+  onOpenAdmin?: () => void;
+  onOpenHistory?: () => void;
 }
 
-const Header = ({ showFavoritesOnly, onToggleFavorites }: HeaderProps) => {
+const Header = ({ showFavoritesOnly, onToggleFavorites, onOpenAdmin, onOpenHistory }: HeaderProps) => {
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const { user, loading, signOut } = useAuth();
 
@@ -35,15 +37,17 @@ const Header = ({ showFavoritesOnly, onToggleFavorites }: HeaderProps) => {
 
           <div className="flex items-center gap-3">
             {user && (
-              <Button
-                variant={showFavoritesOnly ? 'default' : 'outline'}
-                size="sm"
-                onClick={onToggleFavorites}
-                className="gap-2"
-              >
-                <Heart className={`w-4 h-4 ${showFavoritesOnly ? 'fill-current' : ''}`} />
-                <span className="hidden sm:inline">Favorites</span>
-              </Button>
+              <>
+                <Button
+                  variant={showFavoritesOnly ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={onToggleFavorites}
+                  className="gap-2"
+                >
+                  <Heart className={`w-4 h-4 ${showFavoritesOnly ? 'fill-current' : ''}`} />
+                  <span className="hidden sm:inline">Favorites</span>
+                </Button>
+              </>
             )}
 
             {loading ? (
@@ -60,6 +64,15 @@ const Header = ({ showFavoritesOnly, onToggleFavorites }: HeaderProps) => {
                     <p className="text-sm font-medium">{user.email}</p>
                     <p className="text-xs text-muted-foreground">Signed in</p>
                   </div>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={onOpenHistory} className="gap-2">
+                    <History className="w-4 h-4" />
+                    Booking History
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={onOpenAdmin} className="gap-2">
+                    <Shield className="w-4 h-4" />
+                    Admin Panel
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
                     <LogOut className="w-4 h-4 mr-2" />

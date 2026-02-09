@@ -12,6 +12,7 @@ interface MovieListProps {
   showFavoritesOnly?: boolean;
   favorites?: string[];
   onToggleFavorite?: (movieId: string) => void;
+  onTrailerClick?: (movie: Movie) => void;
 }
 
 const MovieList = ({ 
@@ -19,7 +20,8 @@ const MovieList = ({
   selectedMovie, 
   showFavoritesOnly = false,
   favorites = [],
-  onToggleFavorite 
+  onToggleFavorite,
+  onTrailerClick
 }: MovieListProps) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedGenre, setSelectedGenre] = useState<string>('all');
@@ -106,6 +108,7 @@ const MovieList = ({
               isSelected={selectedMovie?.id === movie.id}
               isFavorite={favorites.includes(movie.id)}
               onToggleFavorite={onToggleFavorite}
+              onTrailerClick={onTrailerClick}
             />
           ))}
         </div>
