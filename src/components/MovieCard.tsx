@@ -1,5 +1,5 @@
 import { Movie } from '@/types/booking';
-import { Star, Clock, Calendar, Heart } from 'lucide-react';
+import { Star, Clock, Calendar, Heart, Play } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 interface MovieCardProps {
@@ -8,12 +8,18 @@ interface MovieCardProps {
   isSelected?: boolean;
   isFavorite?: boolean;
   onToggleFavorite?: (movieId: string) => void;
+  onTrailerClick?: (movie: Movie) => void;
 }
 
-const MovieCard = ({ movie, onSelect, isSelected, isFavorite, onToggleFavorite }: MovieCardProps) => {
+const MovieCard = ({ movie, onSelect, isSelected, isFavorite, onToggleFavorite, onTrailerClick }: MovieCardProps) => {
   const handleFavoriteClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     onToggleFavorite?.(movie.id);
+  };
+
+  const handleTrailerClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onTrailerClick?.(movie);
   };
 
   return (
@@ -50,6 +56,18 @@ const MovieCard = ({ movie, onSelect, isSelected, isFavorite, onToggleFavorite }
             aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
           >
             <Heart className={`w-4 h-4 ${isFavorite ? 'fill-current' : ''}`} />
+          </button>
+        )}
+        {/* Trailer Play Button */}
+        {onTrailerClick && (
+          <button
+            onClick={handleTrailerClick}
+            className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40"
+            aria-label="Play trailer"
+          >
+            <div className="w-12 h-12 rounded-full bg-primary/90 flex items-center justify-center">
+              <Play className="w-6 h-6 text-primary-foreground fill-current" />
+            </div>
           </button>
         )}
       </div>
