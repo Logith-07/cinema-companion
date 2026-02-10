@@ -34,6 +34,7 @@ export interface BookingState {
   selectedMovie: Movie | null;
   selectedShowtime: Showtime | null;
   selectedSeats: Seat[];
+  selectedDate: Date | null;
   step: 'movies' | 'showtime' | 'seats' | 'payment' | 'confirmation';
 }
 
