@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       bookings: {
         Row: {
+          booking_date: string | null
           booking_ref: string
           created_at: string
           id: string
@@ -30,6 +31,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          booking_date?: string | null
           booking_ref?: string
           created_at?: string
           id?: string
@@ -44,6 +46,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          booking_date?: string | null
           booking_ref?: string
           created_at?: string
           id?: string
@@ -82,22 +85,70 @@ export type Database = {
       }
       profiles: {
         Row: {
+          avatar_url: string | null
+          city: string | null
           created_at: string
+          date_of_birth: string | null
+          display_name: string | null
           email: string | null
+          gender: string | null
           id: string
+          phone: string | null
+          preferred_language: string | null
           updated_at: string
         }
         Insert: {
+          avatar_url?: string | null
+          city?: string | null
           created_at?: string
+          date_of_birth?: string | null
+          display_name?: string | null
           email?: string | null
+          gender?: string | null
           id: string
+          phone?: string | null
+          preferred_language?: string | null
           updated_at?: string
         }
         Update: {
+          avatar_url?: string | null
+          city?: string | null
           created_at?: string
+          date_of_birth?: string | null
+          display_name?: string | null
           email?: string | null
+          gender?: string | null
           id?: string
+          phone?: string | null
+          preferred_language?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      reviews: {
+        Row: {
+          comment: string | null
+          created_at: string
+          id: string
+          movie_id: string
+          rating: number
+          user_id: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          movie_id: string
+          rating: number
+          user_id: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          movie_id?: string
+          rating?: number
+          user_id?: string
         }
         Relationships: []
       }
