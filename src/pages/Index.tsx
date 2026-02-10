@@ -10,12 +10,16 @@ import Header from '@/components/Header';
 import TrailerModal from '@/components/TrailerModal';
 import AdminPanel from '@/components/AdminPanel';
 import BookingHistory from '@/components/BookingHistory';
+import UserProfile from '@/components/UserProfile';
+import ReviewSection from '@/components/ReviewSection';
+import TheatreSelector from '@/components/TheatreSelector';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, Ticket, Film, Armchair, CreditCard, CheckCircle } from 'lucide-react';
 import heroCinema from '@/assets/hero-cinema.jpg';
 import { useFavorites } from '@/hooks/useFavorites';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { format } from 'date-fns';
 
 const Index = () => {
   const { user } = useAuth();
@@ -23,6 +27,7 @@ const Index = () => {
     selectedMovie: null,
     selectedShowtime: null,
     selectedSeats: [],
+    selectedDate: null,
     step: 'movies',
   });
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null);
@@ -31,16 +36,10 @@ const Index = () => {
   const { favorites, toggleFavorite } = useFavorites();
   const [trailerMovie, setTrailerMovie] = useState<Movie | null>(null);
   const [trailerOpen, setTrailerOpen] = useState(false);
-  const [view, setView] = useState<'main' | 'admin' | 'history'>('main');
+  const [view, setView] = useState<'main' | 'admin' | 'history' | 'profile'>('main');
 
   const handleSelectMovie = (movie: Movie) => {
-    setBookingState({
-      ...bookingState,
-      selectedMovie: movie,
-      selectedShowtime: null,
-      selectedSeats: [],
-      step: 'showtime',
-    });
+    setBookingState({ ...bookingState, selectedMovie: movie, selectedShowtime: null, selectedSeats: [], step: 'showtime' });
   };
 
   const handleTrailerClick = (movie: Movie) => {
@@ -49,27 +48,16 @@ const Index = () => {
   };
 
   const handleSelectShowtime = (showtime: Showtime) => {
-    setBookingState({
-      ...bookingState,
-      selectedShowtime: showtime,
-      selectedSeats: [],
-      step: 'seats',
-    });
+    setBookingState({ ...bookingState, selectedShowtime: showtime, selectedSeats: [], step: 'seats' });
   };
 
   const handleSeatToggle = (seat: Seat) => {
     const isSelected = bookingState.selectedSeats.find((s) => s.id === seat.id);
     if (isSelected) {
-      setBookingState({
-        ...bookingState,
-        selectedSeats: bookingState.selectedSeats.filter((s) => s.id !== seat.id),
-      });
+      setBookingState({ ...bookingState, selectedSeats: bookingState.selectedSeats.filter((s) => s.id !== seat.id) });
     } else {
       if (bookingState.selectedSeats.length >= 10) return;
-      setBookingState({
-        ...bookingState,
-        selectedSeats: [...bookingState.selectedSeats, seat],
-      });
+      setBookingState({ ...bookingState, selectedSeats: [...bookingState.selectedSeats, seat] });
     }
   };
 
@@ -82,7 +70,6 @@ const Index = () => {
     setPaymentMethod(method);
     setBookingId(ref);
 
-    // Save booking to database
     if (user && bookingState.selectedMovie && bookingState.selectedShowtime) {
       await supabase.from('bookings').insert({
         user_id: user.id,
@@ -95,35 +82,28 @@ const Index = () => {
         payment_method: method.label,
         booking_ref: ref,
         status: 'confirmed',
-      });
+        booking_date: bookingState.selectedDate ? format(bookingState.selectedDate, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'),
+      } as any);
     }
 
     setBookingState({ ...bookingState, step: 'confirmation' });
   };
 
   const handleNewBooking = () => {
-    setBookingState({ selectedMovie: null, selectedShowtime: null, selectedSeats: [], step: 'movies' });
+    setBookingState({ selectedMovie: null, selectedShowtime: null, selectedSeats: [], selectedDate: null, step: 'movies' });
     setPaymentMethod(null);
     setBookingId('');
   };
 
   const goBack = () => {
     switch (bookingState.step) {
-      case 'showtime':
-        setBookingState({ ...bookingState, step: 'movies', selectedMovie: null });
-        break;
-      case 'seats':
-        setBookingState({ ...bookingState, step: 'showtime', selectedShowtime: null, selectedSeats: [] });
-        break;
-      case 'payment':
-        setBookingState({ ...bookingState, step: 'seats' });
-        break;
+      case 'showtime': setBookingState({ ...bookingState, step: 'movies', selectedMovie: null }); break;
+      case 'seats': setBookingState({ ...bookingState, step: 'showtime', selectedShowtime: null, selectedSeats: [] }); break;
+      case 'payment': setBookingState({ ...bookingState, step: 'seats' }); break;
     }
   };
 
-  const totalPrice =
-    bookingState.selectedSeats.reduce((sum, seat) => sum + seat.price, 0) +
-    1.5 * bookingState.selectedSeats.length;
+  const totalPrice = bookingState.selectedSeats.reduce((sum, seat) => sum + seat.price, 0) + 1.5 * bookingState.selectedSeats.length;
 
   const steps = [
     { id: 'movies', label: 'Movie', icon: Film },
@@ -132,51 +112,41 @@ const Index = () => {
     { id: 'payment', label: 'Payment', icon: CreditCard },
     { id: 'confirmation', label: 'Done', icon: CheckCircle },
   ];
-
   const currentStepIndex = steps.findIndex((s) => s.id === bookingState.step);
 
-  if (view === 'admin') {
-    return (
-      <div className="min-h-screen bg-background">
-        <Header
-          showFavoritesOnly={showFavoritesOnly}
-          onToggleFavorites={() => setShowFavoritesOnly(!showFavoritesOnly)}
-          onOpenAdmin={() => setView('admin')}
-          onOpenHistory={() => setView('history')}
-        />
-        <main className="container max-w-5xl py-6 md:py-12">
-          <AdminPanel onBack={() => setView('main')} />
-        </main>
-      </div>
-    );
-  }
+  const headerProps = {
+    showFavoritesOnly,
+    onToggleFavorites: () => setShowFavoritesOnly(!showFavoritesOnly),
+    onOpenAdmin: () => setView('admin'),
+    onOpenHistory: () => setView('history'),
+    onOpenProfile: () => setView('profile'),
+  };
 
-  if (view === 'history') {
-    return (
-      <div className="min-h-screen bg-background">
-        <Header
-          showFavoritesOnly={showFavoritesOnly}
-          onToggleFavorites={() => setShowFavoritesOnly(!showFavoritesOnly)}
-          onOpenAdmin={() => setView('admin')}
-          onOpenHistory={() => setView('history')}
-        />
-        <main className="container max-w-5xl py-6 md:py-12">
-          <BookingHistory onBack={() => setView('main')} />
-        </main>
-      </div>
-    );
-  }
+  if (view === 'admin') return (
+    <div className="min-h-screen bg-background">
+      <Header {...headerProps} />
+      <main className="container max-w-5xl py-6 md:py-12"><AdminPanel onBack={() => setView('main')} /></main>
+    </div>
+  );
+
+  if (view === 'history') return (
+    <div className="min-h-screen bg-background">
+      <Header {...headerProps} />
+      <main className="container max-w-5xl py-6 md:py-12"><BookingHistory onBack={() => setView('main')} /></main>
+    </div>
+  );
+
+  if (view === 'profile') return (
+    <div className="min-h-screen bg-background">
+      <Header {...headerProps} />
+      <main className="container max-w-5xl py-6 md:py-12"><UserProfile onBack={() => setView('main')} /></main>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-background">
-      <Header
-        showFavoritesOnly={showFavoritesOnly}
-        onToggleFavorites={() => setShowFavoritesOnly(!showFavoritesOnly)}
-        onOpenAdmin={() => setView('admin')}
-        onOpenHistory={() => setView('history')}
-      />
+      <Header {...headerProps} />
 
-      {/* Hero Section */}
       {bookingState.step === 'movies' && (
         <div className="relative h-[35vh] md:h-[45vh] overflow-hidden">
           <img src={heroCinema} alt="Cinema experience" className="w-full h-full object-cover" />
@@ -190,14 +160,11 @@ const Index = () => {
         </div>
       )}
 
-      {/* Progress Steps */}
       {bookingState.step !== 'movies' && bookingState.step !== 'confirmation' && (
         <div className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border">
           <div className="container max-w-7xl py-4">
             <div className="flex items-center gap-2 overflow-x-auto pb-2">
-              <Button variant="ghost" size="sm" onClick={goBack} className="shrink-0">
-                <ChevronLeft className="w-4 h-4 mr-1" />Back
-              </Button>
+              <Button variant="ghost" size="sm" onClick={goBack} className="shrink-0"><ChevronLeft className="w-4 h-4 mr-1" />Back</Button>
               <div className="flex items-center gap-2 ml-auto">
                 {steps.slice(0, -1).map((step, index) => {
                   const Icon = step.icon;
@@ -205,11 +172,8 @@ const Index = () => {
                   const isCompleted = index < currentStepIndex;
                   return (
                     <div key={step.id} className="flex items-center">
-                      <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-all ${
-                        isActive ? 'bg-primary text-primary-foreground' : isCompleted ? 'bg-primary/20 text-primary' : 'bg-secondary text-muted-foreground'
-                      }`}>
-                        <Icon className="w-4 h-4" />
-                        <span className="hidden sm:inline">{step.label}</span>
+                      <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-all ${isActive ? 'bg-primary text-primary-foreground' : isCompleted ? 'bg-primary/20 text-primary' : 'bg-secondary text-muted-foreground'}`}>
+                        <Icon className="w-4 h-4" /><span className="hidden sm:inline">{step.label}</span>
                       </div>
                       {index < steps.length - 2 && <div className={`w-8 h-0.5 mx-1 ${isCompleted ? 'bg-primary' : 'bg-border'}`} />}
                     </div>
@@ -221,19 +185,11 @@ const Index = () => {
         </div>
       )}
 
-      {/* Main Content */}
       <main className="container max-w-7xl py-6 md:py-12">
         {bookingState.step === 'movies' && (
           <div className="animate-fade-in">
             <h2 className="text-2xl font-bold mb-6">Now Showing</h2>
-            <MovieList
-              onSelectMovie={handleSelectMovie}
-              selectedMovie={bookingState.selectedMovie}
-              showFavoritesOnly={showFavoritesOnly}
-              favorites={favorites}
-              onToggleFavorite={toggleFavorite}
-              onTrailerClick={handleTrailerClick}
-            />
+            <MovieList onSelectMovie={handleSelectMovie} selectedMovie={bookingState.selectedMovie} showFavoritesOnly={showFavoritesOnly} favorites={favorites} onToggleFavorite={toggleFavorite} onTrailerClick={handleTrailerClick} />
           </div>
         )}
 
@@ -249,10 +205,18 @@ const Index = () => {
                     {bookingState.selectedMovie.genre.map((g) => (
                       <span key={g} className="px-3 py-1 text-sm rounded-full bg-secondary text-secondary-foreground">{g}</span>
                     ))}
+                    <span className="px-3 py-1 text-sm rounded-full bg-primary/20 text-primary">{bookingState.selectedMovie.language}</span>
                   </div>
                 </div>
               </div>
-              <ShowtimePicker showtimes={bookingState.selectedMovie.showtimes} selectedShowtime={bookingState.selectedShowtime} onSelectShowtime={handleSelectShowtime} />
+              <ShowtimePicker
+                showtimes={bookingState.selectedMovie.showtimes}
+                selectedShowtime={bookingState.selectedShowtime}
+                onSelectShowtime={handleSelectShowtime}
+                selectedDate={bookingState.selectedDate}
+                onDateChange={(d) => setBookingState({ ...bookingState, selectedDate: d })}
+              />
+              <ReviewSection movieId={bookingState.selectedMovie.id} />
             </div>
             <div>
               <BookingSummary movie={bookingState.selectedMovie} showtime={bookingState.selectedShowtime} selectedSeats={bookingState.selectedSeats} onProceed={() => {}} buttonLabel="Select Showtime First" disabled={!bookingState.selectedShowtime} />
@@ -264,24 +228,18 @@ const Index = () => {
           <div className="grid lg:grid-cols-3 gap-8 animate-fade-in">
             <div className="lg:col-span-2">
               <SeatMap showtime={bookingState.selectedShowtime} selectedSeats={bookingState.selectedSeats} onSeatToggle={handleSeatToggle} />
-              {bookingState.selectedSeats.length > 0 && (
-                <p className="text-center text-sm text-muted-foreground mt-4">Selected {bookingState.selectedSeats.length} of 10 maximum seats</p>
-              )}
+              {bookingState.selectedSeats.length > 0 && <p className="text-center text-sm text-muted-foreground mt-4">Selected {bookingState.selectedSeats.length} of 10 maximum seats</p>}
             </div>
-            <div>
-              <BookingSummary movie={bookingState.selectedMovie} showtime={bookingState.selectedShowtime} selectedSeats={bookingState.selectedSeats} onProceed={handleProceedToPayment} disabled={bookingState.selectedSeats.length === 0} />
-            </div>
+            <div><BookingSummary movie={bookingState.selectedMovie} showtime={bookingState.selectedShowtime} selectedSeats={bookingState.selectedSeats} onProceed={handleProceedToPayment} disabled={bookingState.selectedSeats.length === 0} /></div>
           </div>
         )}
 
         {bookingState.step === 'payment' && bookingState.selectedMovie && bookingState.selectedShowtime && (
-          <div className="max-w-2xl mx-auto">
-            <PaymentForm totalAmount={totalPrice} onPaymentComplete={handlePaymentComplete} onBack={goBack} />
-          </div>
+          <div className="max-w-2xl mx-auto"><PaymentForm totalAmount={totalPrice} onPaymentComplete={handlePaymentComplete} onBack={goBack} /></div>
         )}
 
         {bookingState.step === 'confirmation' && bookingState.selectedMovie && bookingState.selectedShowtime && paymentMethod && (
-          <BookingConfirmation movie={bookingState.selectedMovie} showtime={bookingState.selectedShowtime} seats={bookingState.selectedSeats} paymentMethod={paymentMethod} bookingId={bookingId} onNewBooking={handleNewBooking} />
+          <BookingConfirmation movie={bookingState.selectedMovie} showtime={bookingState.selectedShowtime} seats={bookingState.selectedSeats} paymentMethod={paymentMethod} bookingId={bookingId} bookingDate={bookingState.selectedDate} onNewBooking={handleNewBooking} />
         )}
       </main>
 

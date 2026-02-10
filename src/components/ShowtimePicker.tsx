@@ -1,20 +1,50 @@
+import { useState } from 'react';
 import { Showtime } from '@/types/booking';
-import { Clock, Monitor } from 'lucide-react';
+import { Clock, Monitor, CalendarIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 interface ShowtimePickerProps {
   showtimes: Showtime[];
   selectedShowtime: Showtime | null;
   onSelectShowtime: (showtime: Showtime) => void;
+  selectedDate: Date | null;
+  onDateChange: (date: Date) => void;
 }
 
-const ShowtimePicker = ({ showtimes, selectedShowtime, onSelectShowtime }: ShowtimePickerProps) => {
+const ShowtimePicker = ({ showtimes, selectedShowtime, onSelectShowtime, selectedDate, onDateChange }: ShowtimePickerProps) => {
+  const today = new Date();
+  const displayDate = selectedDate || today;
+
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-semibold flex items-center gap-2">
-        <Clock className="w-5 h-5 text-primary" />
-        Select Showtime
-      </h3>
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold flex items-center gap-2">
+          <Clock className="w-5 h-5 text-primary" />
+          Select Showtime
+        </h3>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" size="sm" className="gap-2">
+              <CalendarIcon className="w-4 h-4" />
+              {format(displayDate, 'MMM d, yyyy')}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="end">
+            <Calendar
+              mode="single"
+              selected={displayDate}
+              onSelect={(d) => d && onDateChange(d)}
+              disabled={(date) => date < new Date(new Date().setHours(0,0,0,0))}
+              initialFocus
+              className={cn("p-3 pointer-events-auto")}
+            />
+          </PopoverContent>
+        </Popover>
+      </div>
       
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {showtimes.map((showtime) => (
@@ -22,9 +52,7 @@ const ShowtimePicker = ({ showtimes, selectedShowtime, onSelectShowtime }: Showt
             key={showtime.id}
             variant={selectedShowtime?.id === showtime.id ? 'default' : 'outline'}
             className={`h-auto py-4 flex flex-col gap-1 transition-all ${
-              selectedShowtime?.id === showtime.id
-                ? 'cinema-glow'
-                : 'hover:border-primary/50'
+              selectedShowtime?.id === showtime.id ? 'cinema-glow' : 'hover:border-primary/50'
             }`}
             onClick={() => onSelectShowtime(showtime)}
             disabled={!showtime.available}
@@ -34,9 +62,7 @@ const ShowtimePicker = ({ showtimes, selectedShowtime, onSelectShowtime }: Showt
               <Monitor className="w-3 h-3" />
               <span>{showtime.screen}</span>
             </div>
-            <span className="text-xs">
-              From ${showtime.price}
-            </span>
+            <span className="text-xs">From ${showtime.price}</span>
           </Button>
         ))}
       </div>

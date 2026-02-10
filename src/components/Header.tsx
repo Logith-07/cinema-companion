@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import AuthModal from './AuthModal';
-import { User, LogOut, Heart, Film, Shield, History } from 'lucide-react';
+import { User, LogOut, Heart, Film, Shield, History, UserCircle } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,15 +16,12 @@ interface HeaderProps {
   onToggleFavorites: () => void;
   onOpenAdmin?: () => void;
   onOpenHistory?: () => void;
+  onOpenProfile?: () => void;
 }
 
-const Header = ({ showFavoritesOnly, onToggleFavorites, onOpenAdmin, onOpenHistory }: HeaderProps) => {
+const Header = ({ showFavoritesOnly, onToggleFavorites, onOpenAdmin, onOpenHistory, onOpenProfile }: HeaderProps) => {
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const { user, loading, signOut } = useAuth();
-
-  const handleSignOut = async () => {
-    await signOut();
-  };
 
   return (
     <>
@@ -37,17 +34,10 @@ const Header = ({ showFavoritesOnly, onToggleFavorites, onOpenAdmin, onOpenHisto
 
           <div className="flex items-center gap-3">
             {user && (
-              <>
-                <Button
-                  variant={showFavoritesOnly ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={onToggleFavorites}
-                  className="gap-2"
-                >
-                  <Heart className={`w-4 h-4 ${showFavoritesOnly ? 'fill-current' : ''}`} />
-                  <span className="hidden sm:inline">Favorites</span>
-                </Button>
-              </>
+              <Button variant={showFavoritesOnly ? 'default' : 'outline'} size="sm" onClick={onToggleFavorites} className="gap-2">
+                <Heart className={`w-4 h-4 ${showFavoritesOnly ? 'fill-current' : ''}`} />
+                <span className="hidden sm:inline">Favorites</span>
+              </Button>
             )}
 
             {loading ? (
@@ -65,6 +55,10 @@ const Header = ({ showFavoritesOnly, onToggleFavorites, onOpenAdmin, onOpenHisto
                     <p className="text-xs text-muted-foreground">Signed in</p>
                   </div>
                   <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={onOpenProfile} className="gap-2">
+                    <UserCircle className="w-4 h-4" />
+                    My Profile
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={onOpenHistory} className="gap-2">
                     <History className="w-4 h-4" />
                     Booking History
@@ -74,7 +68,7 @@ const Header = ({ showFavoritesOnly, onToggleFavorites, onOpenAdmin, onOpenHisto
                     Admin Panel
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
+                  <DropdownMenuItem onClick={() => signOut()} className="text-destructive">
                     <LogOut className="w-4 h-4 mr-2" />
                     Sign Out
                   </DropdownMenuItem>
@@ -89,7 +83,6 @@ const Header = ({ showFavoritesOnly, onToggleFavorites, onOpenAdmin, onOpenHisto
           </div>
         </div>
       </header>
-
       <AuthModal open={authModalOpen} onOpenChange={setAuthModalOpen} />
     </>
   );
